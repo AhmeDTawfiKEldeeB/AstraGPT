@@ -50,7 +50,6 @@ def get_weather(city: str) -> str:
     )
 
     response.raise_for_status()
-
     data = response.json()
 
     return (
