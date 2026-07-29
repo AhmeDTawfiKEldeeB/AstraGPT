@@ -9,7 +9,7 @@ from langchain_core.messages import SystemMessage
 from langgraph.graph import StateGraph, START, MessagesState
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.sqlite import SqliteSaver
-  
+from src.Services.Agent.tools import tools
 
 load_dotenv()
 Path("data").mkdir(exist_ok=True)
@@ -46,10 +46,15 @@ Rules:
 - Be clear, helpful, and concise.
 """
 
+
+
 def get_model(user_model: str | None) -> str:
     if user_model in ALLOWED_MODELS:
         return user_model
     return DEFAULT_MODEL
+
+
+
 
 def build_agent(model_name: str | None = None):
     selected_model = get_model(model_name)
@@ -75,7 +80,7 @@ def build_agent(model_name: str | None = None):
     workflow.add_node("tools",tool_node)
 
     workflow.add_edge(START,"chatbot")
-    workflow.add_conditional_edge("chatbot",tools_condition)
+    workflow.add_conditional_edges("chatbot",tools_condition)
     workflow.add_edge("tools","chatbot")
 
 
@@ -87,3 +92,20 @@ def build_agent(model_name: str | None = None):
     checkpointer = SqliteSaver(conn)
 
     return workflow.compile(checkpointer=checkpointer)
+
+
+_AGENT_CACHE = {}
+
+
+def get_agent(model_name: str | None = None):
+    """
+    Return cached LangGraph agent for selected model.
+    If not created yet, create it once and reuse it.
+    """
+
+    selected_model = get_model(model_name)
+
+    if selected_model not in _AGENT_CACHE:
+        _AGENT_CACHE[selected_model] = build_agent(selected_model)
+
+    return _AGENT_CACHE[selected_model]
