@@ -6,7 +6,7 @@ from sympy import sympify
 from sympy.core.sympify import SympifyError
 from langchain_core.tools import tool
 from langchain_tavily import TavilySearch
-from src.infrastructure.database import save_memory, search_memory
+from infrastructure.sqlalchemy_database import save_memory, search_memory
 from rag import retrieve_from_rag
 
 load_dotenv()
