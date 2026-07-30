@@ -14,7 +14,7 @@ from src.Services.Agent.tools import tools
 load_dotenv()
 Path("data").mkdir(exist_ok=True)
 
-DEFAULT_MODEL = os.getenv("gemini-2.5-flash","DEFAULT_MODEL")
+DEFAULT_MODEL = os.getenv("GOOGLE_MODEL", "gemini-2.5-flash")
 ALLOWED_MODELS = {
     "gemini-2.5-flash",
     "gemini-2.5-pro",
