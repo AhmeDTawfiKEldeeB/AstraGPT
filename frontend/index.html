@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AstraGPT - Chat</title>
+
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "on-tertiary-container": "#bca26c",
+          "inverse-surface": "#2e3132",
+          "on-error-container": "#93000a",
+          "tertiary-fixed-dim": "#dfc38b",
+          "inverse-on-surface": "#f0f1f2",
+          "surface-container": "#edeeef",
+          "tertiary-container": "#4a380c",
+          "tertiary-fixed": "#fddfa4",
+          "surface-container-high": "#e7e8e9",
+          "on-error": "#ffffff",
+          "surface-dim": "#d9dadb",
+          "error-container": "#ffdad6",
+          "primary": "#182442",
+          "outline-variant": "#c6c6ce",
+          "on-background": "#191c1d",
+          "on-primary-fixed-variant": "#3a4666",
+          "inverse-primary": "#bac6ec",
+          "background": "#f8f9fa",
+          "secondary-fixed-dim": "#c0c1ff",
+          "on-primary-fixed": "#0d1a38",
+          "on-secondary-fixed": "#07006c",
+          "secondary-fixed": "#e1e0ff",
+          "surface-container-highest": "#e1e3e4",
+          "surface-container-low": "#f3f4f5",
+          "on-tertiary-fixed": "#261a00",
+          "on-secondary-container": "#fffbff",
+          "outline": "#75777e",
+          "on-surface": "#191c1d",
+          "on-primary": "#ffffff",
+          "on-surface-variant": "#45464e",
+          "on-primary-container": "#98a4c9",
+          "on-secondary": "#ffffff",
+          "secondary": "#4648d4",
+          "primary-container": "#2e3a59",
+          "on-tertiary-fixed-variant": "#574417",
+          "error": "#ba1a1a",
+          "tertiary": "#312300",
+          "on-secondary-fixed-variant": "#2f2ebe",
+          "secondary-container": "#6063ee",
+          "surface-container-lowest": "#ffffff",
+          "surface-bright": "#f8f9fa",
+          "primary-fixed": "#dae2ff",
+          "surface": "#f8f9fa",
+          "surface-tint": "#525e7f",
+          "primary-fixed-dim": "#bac6ec",
+          "on-tertiary": "#ffffff",
+          "surface-variant": "#e1e3e4"
+        },
+        borderRadius: {
+          "DEFAULT": "0.5rem",
+          "sm": "0.25rem",
+          "md": "0.75rem",
+          "lg": "1rem",
+          "xl": "1.5rem",
+          "full": "9999px"
+        },
+        spacing: {
+          "max-width-content": "800px",
+          "md": "16px",
+          "lg": "24px",
+          "xs": "8px",
+          "2xl": "48px",
+          "sm": "12px",
+          "base": "4px",
+          "xl": "32px"
+        },
+        fontFamily: {
+          "code-block": ["JetBrains Mono", "monospace"],
+          "body-lg": ["Inter", "sans-serif"],
+          "display-lg": ["Inter", "sans-serif"],
+          "headline-md-mobile": ["Inter", "sans-serif"],
+          "body-sm": ["Inter", "sans-serif"],
+          "headline-md": ["Inter", "sans-serif"],
+          "label-caps": ["Inter", "sans-serif"]
+        },
+        fontSize: {
+          "code-block": ["14px", { lineHeight: "22px", fontWeight: "400" }],
+          "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+          "display-lg": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "600" }],
+          "headline-md-mobile": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+          "body-sm": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+          "headline-md": ["24px", { lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600" }],
+          "label-caps": ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600" }]
+        }
+      }
+    }
+  };
+</script>
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-background text-on-background flex h-screen overflow-hidden font-body-lg">
+
+<!-- Mobile sidebar scrim -->
+<div id="sidebarScrim" class="fixed inset-0 bg-black/30 backdrop-blur-sm z-30 hidden md:hidden"></div>
+
+<!-- ============ SIDE NAV ============ -->
+<nav id="sideNav" class="sidenav fixed md:sticky top-0 left-0 flex flex-col h-screen w-[280px] md:w-[300px] flex-shrink-0 bg-white/70 dark:bg-[#14171c]/70 backdrop-blur-xl border-r border-outline-variant/30 dark:border-white/10 shadow-sm z-40 -translate-x-full md:translate-x-0 transition-transform duration-300">
+
+  <!-- Header -->
+  <div class="p-md flex items-center gap-sm">
+    <div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold overflow-hidden flex-shrink-0">
+      <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDE1wigTtUIxQPPUOik94VZx2Qh10Eb8gEzcT2ThjJh1Q8CRlVqJoZJKzOtkynbPM7_eRDTpecSAkbbZ3cDk4tgoneLuMUwiVt8gMpJT4HettH0YH74iOKhXbMCT3IM5OG9vpM1tJRKiKkfAH0eRgEocSU9zi9JmuHkf2fKX7GzUiJ3Hjw4dLNj8LaSOyevr0GX_w4OA9ntIiHbb0l2rp6hkC5nIZasmH3AVewJ4c95tloFq6NoDpEKDgCEnSn2-V-l7Q" alt="AstraGPT logo" class="w-full h-full object-cover">
+    </div>
+    <div class="min-w-0">
+      <h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed truncate">AstraGPT</h1>
+      <p id="statusLabel" class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+        <span id="statusDot" class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+        <span id="statusText">Ready</span>
+      </p>
+    </div>
+    <button id="closeSidebarBtn" class="md:hidden ml-auto p-1 text-on-surface-variant">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+
+  <!-- New Chat -->
+  <div class="px-md mb-sm">
+    <button id="newChatBtn" class="w-full flex items-center gap-sm p-sm rounded-lg text-primary dark:text-primary-fixed font-bold bg-surface-container-high dark:bg-primary-container cursor-pointer transition-all active:scale-95 hover:bg-surface-container dark:hover:bg-primary-container/50">
+      <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+      <span class="font-body-lg text-body-lg">New Chat</span>
+    </button>
+  </div>
+
+  <!-- Search conversations -->
+  <div class="px-md mb-md">
+    <div class="relative">
+      <span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+      <input id="historySearch" type="text" placeholder="Search conversations"
+        class="w-full pl-8 pr-2 py-2 text-body-sm font-body-sm rounded-md bg-surface-container-low border border-outline-variant/40 focus:outline-none focus:ring-1 focus:ring-secondary placeholder:text-on-surface-variant">
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="flex-1 overflow-y-auto px-md space-y-base scroll-thin">
+    <div class="flex flex-col">
+      <span class="px-sm pb-sm font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">History</span>
+      <div id="historyList" class="space-y-1"></div>
+      <div id="historyEmpty" class="px-sm py-6 text-center text-body-sm text-on-surface-variant hidden">
+        No conversations yet.<br>Start one above.
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="p-md border-t border-outline-variant/30 space-y-sm">
+    <button id="themeToggleBtn" class="w-full flex items-center gap-sm p-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors">
+      <span class="material-symbols-outlined text-[20px]" id="themeIcon">dark_mode</span>
+      <span class="font-body-sm text-body-sm" id="themeLabel">Dark mode</span>
+    </button>
+    <div class="flex items-center gap-sm p-sm rounded-lg">
+      <div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold text-body-sm flex-shrink-0">M</div>
+      <div class="min-w-0">
+        <p class="font-body-sm text-body-sm font-semibold truncate">Workspace</p>
+        <p class="font-body-sm text-[11px] text-on-surface-variant truncate" id="threadIdLabel">No active thread</p>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ MAIN ============ -->
+<main class="flex-1 flex flex-col relative h-full bg-surface-bright min-w-0">
+
+  <!-- Top bar -->
+  <div class="flex items-center justify-between gap-sm p-md border-b border-outline-variant/20 bg-surface/80 backdrop-blur-md sticky top-0 z-10">
+    <button id="openSidebarBtn" class="md:hidden text-on-surface-variant p-1">
+      <span class="material-symbols-outlined">menu</span>
+    </button>
+    <h1 id="convTitle" class="font-headline-md-mobile md:font-headline-md text-headline-md-mobile md:text-headline-md font-bold text-primary dark:text-primary-fixed truncate">New Chat</h1>
+
+    <div class="flex items-center gap-xs ml-auto">
+      <!-- Model selector -->
+      <div class="relative">
+        <button id="modelSelectorBtn" class="flex items-center gap-xs px-sm py-2 text-on-surface-variant hover:bg-surface-container rounded-lg transition-colors border border-outline-variant/30">
+          <span class="material-symbols-outlined text-[18px]">neurology</span>
+          <span class="font-label-caps text-label-caps" id="modelLabel">Indigo Pro</span>
+          <span class="material-symbols-outlined text-body-sm">expand_more</span>
+        </button>
+        <div id="modelDropdown" class="dropdown-panel hidden absolute right-0 mt-2 w-64 bg-surface-container-lowest border border-outline-variant/30 rounded-lg shadow-xl z-30 overflow-hidden">
+          <div class="p-xs" id="modelList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error toast -->
+  <div id="errorToast" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-error text-on-error px-md py-sm rounded-lg shadow-xl flex items-center gap-sm max-w-[90vw]">
+    <span class="material-symbols-outlined text-[18px]">error</span>
+    <span id="errorToastText" class="text-body-sm font-body-sm"></span>
+    <button id="errorToastClose" class="ml-2 text-on-error/80 hover:text-on-error">
+      <span class="material-symbols-outlined text-[16px]">close</span>
+    </button>
+  </div>
+
+  <!-- Chat scroll area -->
+  <div id="chatScroll" class="flex-1 overflow-y-auto p-md md:p-xl scroll-thin">
+
+    <!-- Welcome state -->
+    <div id="welcomeScreen" class="w-full max-w-[800px] mx-auto flex flex-col items-center justify-center text-center min-h-full">
+      <div class="w-24 h-24 mb-lg flex items-center justify-center bg-transparent">
+        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuD55I3cOGAeqaf_zriVqnIJa9yt0aFRZ0qnbUJKSQFdaoy9tgmwZBmrKJWXMIFeCTmV4tQvY2vqumvofkyC0sf7ISM8SIkF4fgAM5Ntj4rUQ5p2oDvB7Jk3iYLQvAInjr4VctngHOrW8pJ4AsYRVJjhYjafapgYTIhUFbO_2my-un6YWbbVRmYCGaWo7GyH1Wb5_8Wa5g38cj1gkuKs-N05UW68ZnKqhyW0aUX8wDNDRpBTLoPecOce" alt="AstraGPT" class="w-full h-full object-cover">
+      </div>
+      <h2 class="font-display-lg text-3xl md:text-display-lg text-on-background mb-sm">How can I help you today?</h2>
+      <p class="font-body-lg text-body-lg text-on-surface-variant max-w-lg mb-2xl">I'm ready to assist with complex problem-solving, data analysis, or drafting professional content.</p>
+
+      <div id="suggestedPrompts" class="w-full grid grid-cols-1 md:grid-cols-2 gap-md"></div>
+    </div>
+
+    <!-- Messages -->
+    <div id="messagesList" class="w-full max-w-[800px] mx-auto flex flex-col gap-lg pb-xl hidden"></div>
+  </div>
+
+  <!-- Input area -->
+  <div class="px-md md:px-xl pb-md md:pb-xl w-full max-w-[800px] mx-auto sticky bottom-0 bg-gradient-to-t from-surface-bright via-surface-bright to-transparent pt-xl">
+
+    <!-- Attached files preview -->
+    <div id="attachmentsBar" class="hidden flex-wrap gap-xs mb-xs"></div>
+
+    <div id="inputShell" class="relative bg-surface-container-lowest border border-outline-variant/40 rounded-xl shadow-lg backdrop-blur-md transition-shadow focus-within:shadow-xl focus-within:border-secondary">
+      <textarea id="messageInput" class="w-full max-h-48 min-h-[52px] bg-transparent border-none focus:ring-0 resize-none font-body-lg text-body-lg text-on-surface p-md pb-1" placeholder="Message AstraGPT..." rows="1"></textarea>
+
+      <div class="flex items-center justify-between px-2 pb-2">
+        <div class="flex items-center gap-1">
+          <button id="attachBtn" title="Attach file" class="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-colors">
+            <span class="material-symbols-outlined">attach_file</span>
+          </button>
+          <input id="fileInput" type="file" class="hidden" multiple accept=".pdf,.docx,.txt,.md,.py,.csv">
+          <button id="micBtn" title="Voice input" class="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-colors">
+            <span class="material-symbols-outlined">mic</span>
+          </button>
+        </div>
+
+        <button id="sendBtn" title="Send" class="p-2 bg-primary text-on-primary rounded-lg hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center">
+          <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;" id="sendIcon">send</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="text-center mt-sm">
+      <p class="font-body-sm text-body-sm text-on-surface-variant text-xs">AI can make mistakes. Consider verifying critical information.</p>
+    </div>
+  </div>
+</main>
+
+<!-- Templates -->
+<template id="tpl-user-bubble">
+  <div class="msg-row flex justify-end">
+    <div class="max-w-[85%] md:max-w-[75%] bg-surface-container-high dark:bg-white/10 text-on-surface rounded-xl rounded-tr-sm px-md py-sm">
+      <div class="msg-content whitespace-pre-wrap text-body-lg font-body-lg"></div>
+      <div class="attachment-chips flex flex-wrap gap-1 mt-2"></div>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-assistant-bubble">
+  <div class="msg-row flex justify-start gap-sm">
+    <div class="w-8 h-8 rounded-full bg-primary-container flex-shrink-0 flex items-center justify-center overflow-hidden mt-1">
+      <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuD55I3cOGAeqaf_zriVqnIJa9yt0aFRZ0qnbUJKSQFdaoy9tgmwZBmrKJWXMIFeCTmV4tQvY2vqumvofkyC0sf7ISM8SIkF4fgAM5Ntj4rUQ5p2oDvB7Jk3iYLQvAInjr4VctngHOrW8pJ4AsYRVJjhYjafapgYTIhUFbO_2my-un6YWbbVRmYCGaWo7GyH1Wb5_8Wa5g38cj1gkuKs-N05UW68ZnKqhyW0aUX8wDNDRpBTLoPecOce" class="w-full h-full object-cover">
+    </div>
+    <div class="max-w-[85%] md:max-w-[75%] min-w-0 flex flex-col gap-2">
+      <div class="tool-events flex flex-col gap-1"></div>
+      <div class="bg-surface-container-lowest border border-outline-variant/20 shadow-sm rounded-xl rounded-tl-sm px-md py-sm">
+        <div class="msg-content prose-msg text-body-lg font-body-lg text-on-surface"></div>
+        <span class="typing-cursor hidden">▍</span>
+      </div>
+      <div class="msg-actions hidden items-center gap-1 text-on-surface-variant">
+        <button class="copy-btn p-1.5 hover:bg-surface-container-high rounded-md transition-colors" title="Copy">
+          <span class="material-symbols-outlined text-[16px]">content_copy</span>
+        </button>
+        <button class="regen-btn p-1.5 hover:bg-surface-container-high rounded-md transition-colors" title="Regenerate">
+          <span class="material-symbols-outlined text-[16px]">refresh</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-tool-event">
+  <div class="tool-event flex items-center gap-xs px-sm py-1.5 rounded-md bg-surface-container-low border border-outline-variant/20 text-body-sm font-body-sm text-on-surface-variant w-fit">
+    <span class="material-symbols-outlined text-[16px] tool-icon">bolt</span>
+    <span class="tool-name">Tool</span>
+    <span class="tool-spinner spinner"></span>
+    <span class="material-symbols-outlined text-[16px] text-secondary tool-check hidden">check_circle</span>
+  </div>
+</template>
+
+<template id="tpl-attachment-chip">
+  <div class="attachment-chip flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container-high text-body-sm font-body-sm max-w-[180px]">
+    <span class="material-symbols-outlined text-[16px] chip-icon">description</span>
+    <span class="chip-name truncate"></span>
+    <span class="chip-progress text-[11px] text-on-surface-variant"></span>
+    <button class="chip-remove hidden text-on-surface-variant hover:text-error">
+      <span class="material-symbols-outlined text-[14px]">close</span>
+    </button>
+  </div>
+</template>
+
+<script src="script.js"></script>
+</body>
+</html>
