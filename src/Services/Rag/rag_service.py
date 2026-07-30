@@ -23,9 +23,14 @@ Path(DB_PATH).mkdir(exist_ok=True)
 embeddings = GoogleGenerativeAIEmbeddings(model="gemini-embedding-001")
 client = QdrantClient(path=DB_PATH)
 
-VECTOR_SIZE = len(
-    embeddings.embed_query("test")
-)
+_VECTOR_SIZE = None
+
+
+def get_vector_size() -> int:
+    global _VECTOR_SIZE
+    if _VECTOR_SIZE is None:
+        _VECTOR_SIZE = len(embeddings.embed_query("test"))
+    return _VECTOR_SIZE
 
 
 # Read file
@@ -77,7 +82,7 @@ def create_collection():
     client.create_collection(
         collection_name=COLLECTION_NAME,
         vectors_config=VectorParams(
-            size=VECTOR_SIZE,
+            size=get_vector_size(),
             distance=Distance.COSINE,
         ),
     )
