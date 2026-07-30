@@ -629,7 +629,7 @@
     const assistantRow = appendAssistantBubble("");
     const contentEl = assistantRow.querySelector(".msg-content");
     const toolContainer = assistantRow.querySelector(".tool-events");
-    const cursor = assistantRow.querySelector(".typing-cursor");
+    const cursor = assistantRow.querySelector(".typing-dots");
     cursor.classList.remove("hidden");
 
     let fullText = "";
@@ -753,12 +753,8 @@
 
     await loadConversations();
 
-    const savedThread = localStorage.getItem("astra_thread_id");
-    if (savedThread) {
-      await switchConversation(savedThread);
-    } else {
-      startNewChat();
-    }
+    localStorage.removeItem("astra_thread_id");
+    startNewChat();
   }
 
   document.addEventListener("DOMContentLoaded", init);
