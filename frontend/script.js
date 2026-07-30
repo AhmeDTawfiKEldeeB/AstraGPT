@@ -19,10 +19,10 @@
   };
 
   const MODELS = [
-    { id: "indigo-pro", name: "Indigo Pro", desc: "Best for complex reasoning" },
-    { id: "indigo-fast", name: "Indigo Fast", desc: "Optimized for speed" },
-    { id: "gpt-4o", name: "GPT-4o", desc: "OpenAI · general purpose" },
-    { id: "claude-sonnet", name: "Claude Sonnet", desc: "Anthropic · balanced" },
+    { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", desc: "Groq · best for complex reasoning" },
+    { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B", desc: "Groq · optimized for speed" },
+    { id: "mixtral-8x7b-32768", name: "Mixtral 8x7B", desc: "Groq · large context" },
+    { id: "deepseek-r1-distill-llama-70b", name: "DeepSeek R1", desc: "Groq · reasoning focused" },
   ];
 
   const SUGGESTED_PROMPTS = [
@@ -33,13 +33,12 @@
   ];
 
   const TOOL_META = {
-    web_search: { label: "Searching the web", icon: "travel_explore" },
+    tavily_search: { label: "Searching the web", icon: "travel_explore" },
     calculator: { label: "Calculating", icon: "calculate" },
-    weather: { label: "Checking weather", icon: "partly_cloudy_day" },
-    document_search: { label: "Searching documents", icon: "find_in_page" },
-    memory_save: { label: "Saving to memory", icon: "bookmark_add" },
-    memory_recall: { label: "Recalling memory", icon: "psychology" },
-    document_ingestion: { label: "Ingesting document", icon: "sync" },
+    get_weather: { label: "Checking weather", icon: "partly_cloudy_day" },
+    search_uploaded_documents: { label: "Searching documents", icon: "find_in_page" },
+    remember_this: { label: "Saving to memory", icon: "bookmark_add" },
+    recall_memory: { label: "Recalling memory", icon: "psychology" },
   };
 
   const ALLOWED_EXT = ["pdf", "docx", "txt", "md", "py", "csv"];
@@ -654,7 +653,12 @@
     try {
       await streamChat(text, doneAttachments, { onToken, onToolStart, onToolEnd });
     } catch (err) {
-      showError("Couldn't reach the server. Showing a local preview instead.");
+      const msg = err.message || "";
+      if (msg.includes("quota") || msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED")) {
+        showError("Gemini API quota exceeded. The error was: " + msg.slice(0, 120) + "...");
+      } else {
+        showError("Couldn't reach the server. " + msg.slice(0, 100));
+      }
       await simulateAssistantResponse(text, { onToken, onToolStart, onToolEnd });
     }
 
