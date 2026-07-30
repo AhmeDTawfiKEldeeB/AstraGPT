@@ -27,7 +27,6 @@ tavily_tool = TavilySearch(
     max_results=5,
     topic="general",
     include_answer=True,
-    include_images=True,
 )
 
 
