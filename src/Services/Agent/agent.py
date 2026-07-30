@@ -70,6 +70,7 @@ def build_agent(model_name: str | None = None):
     #     temperature=0.2,
     #     streaming=True,
     # )
+    
     # --- Groq ---
     llm = ChatGroq(
         model=selected_model,
