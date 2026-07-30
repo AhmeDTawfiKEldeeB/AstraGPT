@@ -1,20 +1,27 @@
-from src.Services.Agent.agent import get_agent
-from langchain_core.messages import SystemMessage, HumanMessage
+from pathlib import Path
+from contextlib import asynccontextmanager
 
-agent = get_agent("gemini-2.5-flash")
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
-config = {
-    "configurable":{
-        "thread_id": "test_thread_id",
-    }}
+from routes.chat import router as chat_router
+from routes.conversations import router as conversations_router
+from routes.upload import router as upload_router
+from src.infrastructure.sqlalchemy_database import init_db
 
 
-for message_chunk,merge in agent.stream(
-    
-    {'messages':[HumanMessage(content="Generate a blog about machine learning and AI in 2024, include the latest trends and technologies, and make it engaging for readers.")]},
-    config=config,
-    stream_mode='messages'):
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
 
-    if message_chunk.content:
-        print(message_chunk.content,end='',flush=True)
-    
+
+app = FastAPI(title="AstraGPT", lifespan=lifespan)
+
+app.include_router(chat_router, prefix="/chat")
+app.include_router(conversations_router, prefix="/conversations")
+app.include_router(upload_router, prefix="/upload")
+
+frontend_path = Path(__file__).parent / "frontend"
+if frontend_path.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
