@@ -629,7 +629,7 @@
     const assistantRow = appendAssistantBubble("");
     const contentEl = assistantRow.querySelector(".msg-content");
     const toolContainer = assistantRow.querySelector(".tool-events");
-    const cursor = assistantRow.querySelector(".typing-dots");
+    const cursor = assistantRow.querySelector(".typing-cursor");
     cursor.classList.remove("hidden");
 
     let fullText = "";
@@ -753,8 +753,17 @@
 
     await loadConversations();
 
-    localStorage.removeItem("astra_thread_id");
-    startNewChat();
+    const savedThread = localStorage.getItem("astra_thread_id");
+    if (savedThread) {
+      const cachedMsgs = JSON.parse(localStorage.getItem(`astra_msgs_${savedThread}`) || "[]");
+      const hasStaleError = cachedMsgs.some(
+        (m) => typeof m.content === "string" && m.content.includes("image.png")
+      );
+      if (hasStaleError) localStorage.removeItem(`astra_msgs_${savedThread}`);
+      await switchConversation(savedThread);
+    } else {
+      startNewChat();
+    }
   }
 
   document.addEventListener("DOMContentLoaded", init);
