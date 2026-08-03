@@ -20,10 +20,9 @@
   };
 
   const MODELS = [
-    { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", desc: "Groq · best for complex reasoning" },
-    { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B", desc: "Groq · optimized for speed" },
-    { id: "mixtral-8x7b-32768", name: "Mixtral 8x7B", desc: "Groq · large context" },
-    { id: "deepseek-r1-distill-llama-70b", name: "DeepSeek R1", desc: "Groq · reasoning focused" },
+    { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash", desc: "Gemini · balanced speed & quality" },
+    { id: "gemini-3.1-flash-lite", name: "Gemini 3.1 Flash-Lite", desc: "Gemini · fastest, most efficient" },
+    { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash", desc: "Gemini · latest & most capable" },
   ];
 
   const SUGGESTED_PROMPTS = [
@@ -47,7 +46,7 @@
   /* ---------------- State ---------------- */
   const state = {
     threadId: null,
-    model: localStorage.getItem("astra_model") || MODELS[0].id,
+    model: MODELS.some((m) => m.id === localStorage.getItem("astra_model")) ? localStorage.getItem("astra_model") : MODELS[0].id,
     conversations: [],
     messages: [],
     pendingAttachments: [],
