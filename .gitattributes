@@ -1,0 +1,4 @@
+# Mark non-Python assets as vendored so GitHub linguist
+# reports the repository as Python-only.
+frontend/* linguist-vendored
+str linguist-vendored
