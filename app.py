@@ -9,7 +9,7 @@ import asyncio
 import json
 import threading
 
-from langchain_core.messages import AIMessageChunk, ToolMessageChunk
+from langchain_core.messages import AIMessageChunk, ToolMessageChunk, ToolMessage
 
 from src.infrastructure.sqlalchemy_database import init_db, get_chat_history, save_chat_message, create_or_update_conversation, list_conversations
 from src.Services.Agent.agent import get_agent
@@ -55,7 +55,7 @@ def event_generator_stream(model: str, thread_id: str, message: str):
                 if name:
                     yield ("tool_start", name)
 
-        if isinstance(msg_chunk, ToolMessageChunk):
+        if isinstance(msg_chunk, (ToolMessage, ToolMessageChunk)):
             name = getattr(msg_chunk, "name", None) or ""
             if name:
                 yield ("tool_end", name)
