@@ -2,3 +2,6 @@
 # reports the repository as Python-only.
 frontend/* linguist-vendored
 str linguist-vendored
+*.html linguist-vendored
+*.css linguist-vendored
+*.js linguist-vendored
