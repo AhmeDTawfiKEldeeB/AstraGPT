@@ -173,8 +173,7 @@ The model picker in the UI is safely allow-listed in `src/Services/Agent/agent.p
 | `gemini-3.6-flash` | Latest fast model |
 | `gemini-3.5-flash` | Default |
 | `gemini-3.1-flash-lite` | Lightweight & fast |
-| `gemini-flash-latest` | Rolling latest |
-| `gemini-flash-lite-latest` | Rolling lite |
+
 
 ---
 
