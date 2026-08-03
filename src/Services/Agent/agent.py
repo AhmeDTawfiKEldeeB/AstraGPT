@@ -4,8 +4,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 import certifi
-# from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_groq import ChatGroq
+
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import SystemMessage
 from langgraph.graph import StateGraph, START, MessagesState
 from langgraph.prebuilt import ToolNode, tools_condition
@@ -17,18 +17,13 @@ os.environ["SSL_CERT_FILE"] = certifi.where()
 os.environ["REQUESTS_CA_BUNDLE"] = certifi.where()
 Path("data").mkdir(exist_ok=True)
 
-DEFAULT_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+DEFAULT_MODEL = os.getenv("GOOGLE_MODEL", "gemini-3.5-flash")
 ALLOWED_MODELS = {
-    "llama-3.3-70b-versatile",
-    "llama-3.1-8b-instant",
-    "mixtral-8x7b-32768",
-    "deepseek-r1-distill-llama-70b",
-    # Gemini models (legacy - require Google API key)
-    # "gemini-2.5-flash",
-    # "gemini-2.5-pro",
-    # "gemini-2.5-flash-lite",
-    # "gemini-2.0-flash",
-    # "gemini-2.0-flash-lite",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-3.1-flash-lite",
+    "gemini-flash-latest",
+    "gemini-flash-lite-latest",
 }
 
 SYSTEM_PROMPT = """
@@ -49,7 +44,7 @@ Rules:
 - If the user asks you to remember something, use remember_this.
 - If the user asks about previous preferences or saved facts, use recall_memory.
 - Use calculator for math questions.
-- When using web search, summarize clearly and mention that the answer is based on web search results.
+- When using web search, summarize clearly and answer this question.
 - Be clear, helpful, and concise.
 """
 
@@ -64,19 +59,13 @@ def get_model(user_model: str | None) -> str:
 
 def build_agent(model_name: str | None = None):
     selected_model = get_model(model_name)
-    # --- Google Gemini (commented out) ---
-    # llm = ChatGoogleGenerativeAI(
-    #     model=selected_model,
-    #     temperature=0.2,
-    #     streaming=True,
-    # )
-    
-    # --- Groq ---
-    llm = ChatGroq(
+
+    llm = ChatGoogleGenerativeAI(
         model=selected_model,
         temperature=0.2,
         streaming=True,
     )
+    
     llm_with_tools = llm.bind_tools(tools)
 
 
