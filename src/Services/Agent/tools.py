@@ -7,10 +7,7 @@ from langchain_tavily import TavilySearch
 from sympy import sympify
 from sympy.core.sympify import SympifyError
 
-from src.infrastructure.sqlalchemy_database import (
-    save_memory,
-    search_memory,
-)
+from src.infrastructure.sqlalchemy_database import (save_memory,search_memory,)
 from src.Services.Rag.rag_service import retrieve_context
 
 load_dotenv()
