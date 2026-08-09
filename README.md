@@ -143,8 +143,6 @@ uvicorn app:app --reload
 
 Open **http://localhost:8000** — the frontend is served automatically.
 
-![AstraGPT UI](https://lh3.googleusercontent.com/aida-public/AB6AXuDE1wigTtUIxQPPUOik94VZx2Qh10Eb8gEzcT2ThjJh1Q8CRlVqJoZJKzOtkynbPM7_eRDTpecSAkbbZ3cDk4tgoneLuMUwiVt8gMpJT4HettH0YH74iOKhXbMCT3IM5OG9vpM1tJRKiKkfAH0eRgEocSU9zi9JmuHkf2fKX7GzUiJ3Hjw4dLNj8LaSOyevr0GX_w4OA9ntIiHbb0l2rp6hkC5nIZasmH3AVewJ4c95tloFq6NoDpEKDgCEnSn2-V-l7Q" width="100%">
-
 ---
 
 ## Environment Variables 🔐
