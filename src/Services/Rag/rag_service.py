@@ -126,7 +126,7 @@ def store_document(file_path: str,thread_id: str,):
     }
 
 # Retrieve context
-def retrieve_context(query: str,thread_id: str,top_k: int = 4,) -> str:
+def retrieve_context(query: str,thread_id: str,top_k: int = 6,) -> str:
 
     query_vector = embeddings.embed_query(query)
     results = client.query_points(
@@ -142,8 +142,11 @@ def retrieve_context(query: str,thread_id: str,top_k: int = 4,) -> str:
     context = []
     for i, point in enumerate(results, start=1):
         source = point.payload.get("source","uploaded document",)
+        text = point.payload.get("text", "")
+        score = getattr(point, "score", None)
+        score_info = f" (relevance: {score:.2f})" if score is not None else ""
         context.append(
-            f"[Source {i}: {source}]\n"
-            f"{point.payload['text']}"
+            f"[Source {i}: {source}{score_info}]\n"
+            f"{text}"
         )
     return "\n\n".join(context)
