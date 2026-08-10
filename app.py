@@ -6,8 +6,15 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse
 
 import asyncio
+import base64
 import json
+import os
 import threading
+
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from langchain_core.messages import AIMessageChunk, ToolMessageChunk, ToolMessage
 
@@ -150,6 +157,67 @@ async def upload_file(file: UploadFile = File(...), thread_id: str = Form("defau
         "chunks": result["chunks"],
         "thread_id": thread_id,
     }
+
+
+@app.post("/stt")
+async def speech_to_text(file: UploadFile = File(...)):
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Empty audio file")
+
+    mime_type = file.content_type or "audio/webm"
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="GOOGLE_API_KEY is not set")
+
+    base64_audio = base64.b64encode(content).decode("ascii")
+
+    prompt = (
+        "Transcribe this audio exactly as spoken. "
+        "Keep the original language of the speaker (detect it automatically). "
+        "Do not add punctuation that was not spoken. "
+        "Reply with the transcription text only."
+    )
+
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {"inline_data": {"mime_type": mime_type, "data": base64_audio}},
+                    {"text": prompt},
+                ]
+            }
+        ]
+    }
+
+    models = [os.getenv("GOOGLE_MODEL", "gemini-2.0-flash"), "gemini-2.0-flash"]
+    last_error = None
+    for model in dict.fromkeys(models):
+        try:
+            resp = requests.post(
+                f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+                params={"key": api_key},
+                json=payload,
+                timeout=60,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                parts = (
+                    data.get("candidates", [{}])[0]
+                    .get("content", {})
+                    .get("parts", [])
+                )
+                text = "".join(p.get("text", "") for p in parts).strip()
+                if text:
+                    return {"text": text, "model": model}
+                raise HTTPException(status_code=422, detail="No speech detected in the audio")
+            last_error = f"Gemini API returned HTTP {resp.status_code}: {resp.text[:300]}"
+        except HTTPException:
+            raise
+        except Exception as e:
+            last_error = str(e)
+
+    raise HTTPException(status_code=502, detail=f"Speech-to-text failed: {last_error}")
 
 
 @app.get("/conversations")
