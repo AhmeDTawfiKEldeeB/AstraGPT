@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List
 from uuid import uuid4
+from functools import lru_cache
 
 import docx2txt
 from dotenv import load_dotenv
@@ -24,6 +25,8 @@ embeddings = GoogleGenerativeAIEmbeddings(model="gemini-embedding-001")
 client = QdrantClient(path=DB_PATH)
 
 _VECTOR_SIZE = None
+_query_cache = {}
+_CACHE_MAX = 100
 
 
 def get_vector_size() -> int:
@@ -88,12 +91,11 @@ def create_collection():
     )
 # Embed documents
 def embed_documents(documents: List[Document],) -> List[PointStruct]:
-    points = []
-    for document in documents:
-        embedding = embeddings.embed_query(
-            document.page_content
-        )
+    texts = [doc.page_content for doc in documents]
+    all_embeddings = embeddings.embed_documents(texts)
 
+    points = []
+    for document, embedding in zip(documents, all_embeddings):
         points.append(
             PointStruct(
                 id=str(uuid4()),
@@ -128,7 +130,15 @@ def store_document(file_path: str,thread_id: str,):
 # Retrieve context
 def retrieve_context(query: str,thread_id: str,top_k: int = 6,) -> str:
 
-    query_vector = embeddings.embed_query(query)
+    cache_key = f"{query}:{thread_id}"
+    if cache_key in _query_cache:
+        query_vector = _query_cache[cache_key]
+    else:
+        query_vector = embeddings.embed_query(query)
+        if len(_query_cache) >= _CACHE_MAX:
+            _query_cache.clear()
+        _query_cache[cache_key] = query_vector
+
     results = client.query_points(
         collection_name=COLLECTION_NAME,
         query=query_vector,
