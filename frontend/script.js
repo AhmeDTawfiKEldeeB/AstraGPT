@@ -119,6 +119,7 @@
       thinking: { text: "Thinking…", color: "bg-secondary", active: true },
       tool: { text: "Using tool…", color: "bg-tertiary", active: true },
       listening: { text: "Listening…", color: "bg-error", active: true },
+      transcribing: { text: "Transcribing…", color: "bg-tertiary", active: true },
       uploading: { text: "Uploading…", color: "bg-secondary", active: true },
       streaming: { text: "Streaming…", color: "bg-secondary", active: true },
     };
@@ -537,51 +538,94 @@
   });
 
   /* ---------------- Speech-to-text ---------------- */
-  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let recognizer = null;
-  if (SpeechRecognitionAPI) {
-    recognizer = new SpeechRecognitionAPI();
-    recognizer.continuous = false;
-    recognizer.interimResults = false;
-    recognizer.lang = "en-US";
+  let mediaRecorder = null;
+  let audioStream = null;
+  let audioChunks = [];
 
-    recognizer.onstart = () => {
-      state.isRecording = true;
-      dom.micBtn.classList.add("listening");
-      setStatus("listening");
-    };
-    recognizer.onresult = (event) => {
-      const transcript = Array.from(event.results)
-        .map((r) => r[0].transcript)
-        .join(" ");
-      dom.messageInput.value = (dom.messageInput.value + " " + transcript).trim();
-      autoResize();
-    };
-    recognizer.onerror = (event) => {
-      if (event.error === "not-allowed" || event.error === "permission-denied") {
+  function canRecordAudio() {
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+  }
+
+  async function startRecording() {
+    try {
+      audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err) {
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
         showError("Microphone permission was denied.");
       } else {
-        showError("Speech recognition error: " + event.error);
+        showError("Microphone unavailable: " + (err.message || err.name));
       }
+      return;
+    }
+    const mimeType =
+      ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"].find((t) =>
+        window.MediaRecorder.isTypeSupported(t)
+      ) || "";
+    mediaRecorder = new MediaRecorder(audioStream, mimeType ? { mimeType } : undefined);
+    audioChunks = [];
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data && e.data.size) audioChunks.push(e.data);
     };
-    recognizer.onend = () => {
-      state.isRecording = false;
-      dom.micBtn.classList.remove("listening");
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(audioChunks, { type: mimeType || "audio/webm" });
+      transcribeBlob(blob);
+    };
+    mediaRecorder.start();
+    state.isRecording = true;
+    dom.micBtn.classList.add("listening");
+    setStatus("listening");
+  }
+
+  function stopRecording() {
+    try {
+      if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+    } catch {}
+    try {
+      audioStream && audioStream.getTracks().forEach((t) => t.stop());
+    } catch {}
+    mediaRecorder = null;
+    audioStream = null;
+    state.isRecording = false;
+    dom.micBtn.classList.remove("listening");
+    setStatus("transcribing");
+  }
+
+  async function transcribeBlob(blob) {
+    try {
+      const formData = new FormData();
+      formData.append("file", blob, "recording.webm");
+      const res = await fetch(`${API_BASE}/stt`, { method: "POST", body: formData });
+      if (!res.ok) {
+        let detail = `HTTP ${res.status}`;
+        try {
+          detail = (await res.json()).detail || detail;
+        } catch {}
+        throw new Error(detail);
+      }
+      const data = await res.json();
+      const transcript = (data.text || "").trim();
+      if (transcript) {
+        dom.messageInput.value = (dom.messageInput.value + " " + transcript).trim();
+        autoResize();
+      } else {
+        showError("No speech detected. Try again.");
+      }
+    } catch (err) {
+      showError("Speech-to-text failed: " + err.message);
+    } finally {
       setStatus("ready");
-    };
-  } else {
-    dom.micBtn.addEventListener("click", () => showError("Speech recognition isn't supported in this browser."));
+    }
   }
 
   dom.micBtn.addEventListener("click", () => {
-    if (!recognizer) return;
-    if (state.isRecording) recognizer.stop();
-    else {
-      try {
-        recognizer.start();
-      } catch {
-        /* already started */
-      }
+    if (state.isRecording) {
+      if (mediaRecorder) stopRecording();
+      return;
+    }
+    if (canRecordAudio()) {
+      startRecording();
+    } else {
+      showError("Voice input isn't supported on this browser.");
     }
   });
 
