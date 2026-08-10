@@ -21,7 +21,7 @@ from langchain_core.messages import AIMessageChunk, ToolMessageChunk, ToolMessag
 from src.infrastructure.sqlalchemy_database import init_db, get_chat_history, save_chat_message, create_or_update_conversation, list_conversations
 from src.Services.Agent.agent import get_agent
 from src.Services.Agent.tools import set_current_thread_id
-from src.Services.Rag.rag_service import store_document
+from src.Services.Rag.rag_service import store_document, retrieve_context
 
 
 @asynccontextmanager
@@ -37,11 +37,24 @@ app = FastAPI(title="AstraGPT", lifespan=lifespan)
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt", ".md", ".py", ".csv"}
 
 
-def event_generator_stream(model: str, thread_id: str, message: str):
+def event_generator_stream(model: str, thread_id: str, message: str, uploaded_files: list[str] | None = None):
     """Synchronous generator running in a thread."""
     agent = get_agent(model)
     config = {"configurable": {"thread_id": thread_id}}
-    input_data = {"messages": [{"role": "user", "content": message}]}
+
+    user_content = message
+    if uploaded_files:
+        files_list = ", ".join(uploaded_files)
+        doc_context = retrieve_context(query=message, thread_id=thread_id, top_k=6)
+        user_content = (
+            f"[Uploaded document(s): {files_list}]\n"
+            f"--- DOCUMENT CONTENT (for reference only) ---\n"
+            f"{doc_context}\n"
+            f"--- END DOCUMENT CONTENT ---\n\n"
+            f"{message}"
+        )
+
+    input_data = {"messages": [{"role": "user", "content": user_content}]}
 
     full_response = ""
     for msg_chunk, metadata in agent.stream(input_data, config, stream_mode="messages"):
@@ -75,6 +88,7 @@ async def chat_stream(body: dict):
     thread_id = body["thread_id"]
     message = body["message"]
     model = body.get("model", "llama-3.3-70b-versatile")
+    uploaded_files = body.get("uploaded_files") or []
 
     set_current_thread_id(thread_id)
 
@@ -87,7 +101,7 @@ async def chat_stream(body: dict):
 
         def stream_in_thread():
             try:
-                for event_type, data in event_generator_stream(model, thread_id, message):
+                for event_type, data in event_generator_stream(model, thread_id, message, uploaded_files):
                     queue.put_nowait((event_type, data))
             except Exception as e:
                 queue.put_nowait(("error", str(e)))
