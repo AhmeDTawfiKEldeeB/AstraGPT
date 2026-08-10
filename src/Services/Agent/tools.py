@@ -1,5 +1,6 @@
 import os
 import requests
+import threading
 
 from dotenv import load_dotenv
 from langchain_core.tools import tool
@@ -12,12 +13,15 @@ from src.Services.Rag.rag_service import retrieve_context
 
 load_dotenv()
 
-CURRENT_THREAD_ID = "default"
+_thread_local = threading.local()
 
 
 def set_current_thread_id(thread_id: str):
-    global CURRENT_THREAD_ID
-    CURRENT_THREAD_ID = thread_id
+    _thread_local.current_thread_id = thread_id
+
+
+def get_current_thread_id() -> str:
+    return getattr(_thread_local, "current_thread_id", "default")
 
 
 tavily_tool = TavilySearch(
@@ -78,15 +82,14 @@ def calculator(expression: str) -> str:
 @tool
 def search_uploaded_documents(query: str) -> str:
     """
-    Search uploaded documents for relevant information.
-
-    Use this tool when the user asks about uploaded PDFs,
-    DOCX, TXT, Markdown files, notes, or other uploaded documents.
+    Search ONLY uploaded documents for relevant information.
+    Use this ONLY when the user's question is specifically about the content of an uploaded file.
+    Do NOT use this for general questions, news, current events, or anything not in the uploaded files.
     """
 
     return retrieve_context(
         query=query,
-        thread_id=CURRENT_THREAD_ID,
+        thread_id=get_current_thread_id(),
     )
 
 
@@ -98,7 +101,7 @@ def remember_this(memory: str) -> str:
     """
 
     return save_memory(
-        thread_id=CURRENT_THREAD_ID,
+        thread_id=get_current_thread_id(),
         memory=memory,
     )
 
@@ -110,7 +113,7 @@ def recall_memory(query: str) -> str:
     """
 
     return search_memory(
-        thread_id=CURRENT_THREAD_ID,
+        thread_id=get_current_thread_id(),
         query=query,
     )
 
