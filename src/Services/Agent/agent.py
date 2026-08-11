@@ -53,6 +53,7 @@ def build_agent(model_name: str | None = None):
         streaming=True,
         max_retries=2,
         request_timeout=60,
+        thinking_budget=0,
     )
     
     llm_with_tools = llm.bind_tools(tools)
