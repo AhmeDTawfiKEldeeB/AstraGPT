@@ -4,8 +4,6 @@
 
 <h1 align="center">AstraGPT</h1>
 
-<p align="center">
-  <b>A production-style, agentic AI assistant with RAG, live web search, long-term memory, and streaming responses.</b>
 </p>
 
 <p align="center">
@@ -15,10 +13,21 @@
   <img src="https://img.shields.io/badge/Google%20Gemini-LLM-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white" alt="Gemini">
   <img src="https://img.shields.io/badge/Qdrant-Vector%20DB-D800FF?style=for-the-badge&logo=qdrant&logoColor=white" alt="Qdrant">
   <img src="https://img.shields.io/badge/SQLite-Storage-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite">
+  <img src="https://img.shields.io/badge/Tailwind%20CSS-3-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
+  <img src="https://img.shields.io/badge/SSE-Streaming-FF4B4B?style=for-the-badge&logo=reactivex&logoColor=white" alt="SSE">
+  <img src="https://img.shields.io/badge/Voice%20Input-Enabled-4285F4?style=for-the-badge&logo=googleassistant&logoColor=white" alt="Voice Input">
   <img src="https://img.shields.io/badge/License-Apache%202.0-blue?style=for-the-badge" alt="License">
 </p>
 
 AstraGPT is a full-stack ChatGPT-style assistant that doesn't just chat — it *acts*. It searches the web in real time, retrieves answers from documents you upload, remembers facts about you across sessions, computes math, checks the weather, and streams every token live to a polished, Material-Design-3 UI.
+
+---
+
+## Screenshots 📸
+
+<p align="center">
+  <img src="assets/screenshot.png" alt="AstraGPT chat interface" width="720">
+</p>
 
 ---
 
@@ -44,12 +53,10 @@ AstraGPT is a full-stack ChatGPT-style assistant that doesn't just chat — it *
 | 🧠 Long-term memory | `remember_this` / `recall_memory` tools backed by SQLite |
 | 🧮 Math & calculation | SymPy-powered `calculator` tool |
 | ⛅ Weather | OpenWeatherMap tool |
-| 🧬 Multi-model support | Switch Gemini models from the UI (5 presets, safely allow-listed) |
+| 🧬 Multi-model support | Switch Gemini models from the UI (3 presets, safely allow-listed) |
 | 🕘 Conversation history | Searchable sidebar with auto-generated titles |
-| 🌗 Dark / light theme | Material Design 3 color system, persisted preference |
-| 📎 File attachments | Multiple files per chat with upload progress chips |
 | 🎤 Voice input | Microphone capture in the browser |
-| 📋 Copy / regenerate | Per-message actions on assistant replies |
+
 
 ---
 
@@ -98,11 +105,13 @@ web search  weather     calculator    vector store
 |---|---|
 | Backend | FastAPI, Uvicorn |
 | Agent framework | LangGraph, LangChain, LangChain-Groq |
-| LLM | Google Gemini (`ChatGoogleGenerativeAI`), 5 selectable models |
+| LLM | Google Gemini (`ChatGoogleGenerativeAI`), 3 selectable models |
 | Embeddings | `gemini-embedding-001` |
 | Vector store | Qdrant (local, on-disk, cosine distance) |
 | Web search | Tavily |
+| Weather | OpenWeatherMap |
 | Math | SymPy |
+| Speech-to-text | Gemini `generateContent` REST API (`/stt`) |
 | Storage | SQLite (chat history, memory, graph checkpoints) via SQLAlchemy |
 | File parsing | PyPDF, docx2txt |
 | Frontend | Vanilla HTML/CSS/JS, Tailwind CSS, Material Design 3 theming |
@@ -181,6 +190,7 @@ The model picker in the UI is safely allow-listed in `src/Services/Agent/agent.p
 |---|---|---|
 | `POST` | `/chat/stream` | Send a message, receive an **SSE** stream of tokens and tool events |
 | `POST` | `/upload` | Upload a document (`multipart/form-data`) to the RAG knowledge base |
+| `POST` | `/stt` | Speech-to-text: transcribe an audio upload via the Gemini API (voice input) |
 | `GET` | `/conversations` | List all conversations (newest first) |
 | `GET` | `/history/{thread_id}` | Full message history for a thread |
 | `GET` | `/` | Serve the frontend (static mount) |
@@ -203,10 +213,12 @@ event: error       data: {"message": "..."}
 
 ```
 AstraGPT/
-├── app.py                          # FastAPI app: routes, SSE streaming, uploads
+├── app.py                          # FastAPI app: routes, SSE streaming, uploads, /stt
 ├── main.py                         # CLI entry point
 ├── requirements.txt                # Python dependencies
 ├── .env                            # Secrets (never commit)
+├── assets/                         # Project assets (screenshots, logo)
+│   └── screenshot.png
 ├── frontend/                       # Vanilla JS UI (Tailwind + Material 3)
 │   ├── index.html
 │   ├── script.js
@@ -240,17 +252,3 @@ The system prompt (`agent.py`) teaches the model when to act:
 
 ---
 
-## Roadmap 🗺️
-
-- [ ] Authentication & multi-user workspaces
-- [ ] Docker + docker-compose deployment
-- [ ] More chunking strategies & hybrid (BM25 + vector) retrieval
-- [ ] Speech-to-text backend (beyond browser mic)
-- [ ] Streaming progress for uploads
-- [ ] Unit tests for RAG pipeline and agent tools
-
----
-
-## License ⚖️
-
-This project is licensed under the terms of the [LICENSE](LICENSE) file.
