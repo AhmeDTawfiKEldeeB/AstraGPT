@@ -19,8 +19,8 @@ load_dotenv()
 from langchain_core.messages import AIMessageChunk, ToolMessageChunk, ToolMessage
 
 from src.infrastructure.sqlalchemy_database import init_db, get_chat_history, save_chat_message, create_or_update_conversation, list_conversations
-from src.Services.Agent.agent import get_agent
-from src.Services.Agent.tools import set_current_thread_id
+from src.Services.Agent.agent import get_agent, DEFAULT_MODEL
+from src.Services.Agent.tools import set_current_thread_id, tavily_tool
 from src.Services.Rag.rag_service import store_document, retrieve_context
 
 
@@ -37,12 +37,27 @@ app = FastAPI(title="AstraGPT", lifespan=lifespan)
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt", ".md", ".py", ".csv"}
 
 
+TIME_SENSITIVE_KEYWORDS = (
+    "news", "latest", "current", "today", "now", "recent", "update",
+    "price", "prices", "stock", "stocks", "weather", "forecast",
+    "release", "releases", "released", "election", "score", "scores",
+    "who won", "who became", "who is the new", "breaking",
+)
+
+
+def is_time_sensitive(message: str) -> bool:
+    lowered = message.lower()
+    return any(kw in lowered for kw in TIME_SENSITIVE_KEYWORDS)
+
+
 def event_generator_stream(model: str, thread_id: str, message: str, uploaded_files: list[str] | None = None):
     """Synchronous generator running in a thread."""
     agent = get_agent(model)
-    config = {"configurable": {"thread_id": thread_id}}
+    config = {"configurable": {"thread_id": thread_id}, "recursion_limit": 10}
 
     user_content = message
+    web_searched = False
+
     if uploaded_files:
         files_list = ", ".join(uploaded_files)
         doc_context = retrieve_context(query=message, thread_id=thread_id, top_k=6)
@@ -53,6 +68,20 @@ def event_generator_stream(model: str, thread_id: str, message: str, uploaded_fi
             f"--- END DOCUMENT CONTENT ---\n\n"
             f"{message}"
         )
+
+    if is_time_sensitive(message):
+        try:
+            search_results = tavily_tool.invoke(message)
+            if search_results and "Error" not in str(search_results)[:200]:
+                yield ("tool_start", "tavily_search")
+                web_searched = True
+                user_content = (
+                    f"[Web search results for the user's question]\n"
+                    f"{search_results}\n\n"
+                    f"{message}"
+                )
+        except Exception:
+            pass
 
     input_data = {"messages": [{"role": "user", "content": user_content}]}
 
@@ -80,6 +109,9 @@ def event_generator_stream(model: str, thread_id: str, message: str, uploaded_fi
             if name:
                 yield ("tool_end", name)
 
+    if web_searched:
+        yield ("tool_end", "tavily_search")
+
     yield ("done", full_response)
 
 
@@ -87,7 +119,7 @@ def event_generator_stream(model: str, thread_id: str, message: str, uploaded_fi
 async def chat_stream(body: dict):
     thread_id = body["thread_id"]
     message = body["message"]
-    model = body.get("model", "llama-3.3-70b-versatile")
+    model = body.get("model", DEFAULT_MODEL)
     uploaded_files = body.get("uploaded_files") or []
 
     set_current_thread_id(thread_id)
