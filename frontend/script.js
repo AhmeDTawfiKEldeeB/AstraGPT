@@ -50,6 +50,7 @@
     conversations: [],
     messages: [],
     pendingAttachments: [],
+    uploadedFiles: [],
     isStreaming: false,
     isRecording: false,
     lastUserMessage: null,
@@ -329,6 +330,7 @@
     state.threadId = uuid();
     state.messages = [];
     state.pendingAttachments = [];
+    state.uploadedFiles = [];
     persist();
     dom.threadIdLabel.textContent = state.threadId;
     dom.convTitle.textContent = "New Chat";
@@ -501,33 +503,27 @@
             renderAttachmentsBar();
           }
         };
-        xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve(xhr.response) : reject());
-        xhr.onerror = reject;
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(xhr.response);
+          } else {
+            let detail = "Upload failed";
+            try { detail = JSON.parse(xhr.responseText).detail || detail; } catch {}
+            reject(new Error(detail));
+          }
+        };
+        xhr.onerror = () => reject(new Error("Network error during upload"));
         xhr.send(formData);
       });
       record.status = "done";
       record.progress = 100;
-    } catch {
-      await simulateIngestProgress(record);
+      state.uploadedFiles.push(file.name);
+    } catch (err) {
+      record.status = "error";
+      showError("Upload failed: " + (err.message || "Unknown error"));
     }
     renderAttachmentsBar();
     setStatus("ready");
-  }
-
-  function simulateIngestProgress(record) {
-    return new Promise((resolve) => {
-      const step = () => {
-        record.progress = Math.min(100, record.progress + 20);
-        renderAttachmentsBar();
-        if (record.progress >= 100) {
-          record.status = "done";
-          resolve();
-        } else {
-          setTimeout(step, 180);
-        }
-      };
-      step();
-    });
   }
 
   dom.attachBtn.addEventListener("click", () => dom.fileInput.click());
@@ -725,7 +721,7 @@
         thread_id: state.threadId,
         message,
         model: state.model,
-        attachments: attachments.map((a) => a.id),
+        uploaded_files: state.uploadedFiles,
       }),
     });
     if (!res.ok || !res.body) throw new Error("stream unavailable");
