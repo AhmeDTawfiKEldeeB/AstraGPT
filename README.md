@@ -62,38 +62,9 @@ AstraGPT is a full-stack ChatGPT-style assistant that doesn't just chat — it *
 
 ## Architecture 🏗️
 
-```
-┌─────────────────────────────┐
-│  Frontend (Vanilla JS +     │
-│  Tailwind, Material 3 UI)   │
-└──────────────┬──────────────┘
-               │  fetch / SSE
-┌──────────────▼──────────────┐
-│  FastAPI  (app.py)          │
-│  /chat/stream  /upload      │
-│  /conversations /history    │
-└──────────────┬──────────────┘
-               │ LangGraph StateGraph
-┌──────────────▼──────────────────────────────────────┐
-│  Agent (LangGraph + Gemini)                         │
-│  ┌──────────┐  conditional   ┌──────────┐           │
-│  │ chatbot  │ ─────────────▶ │  tools   │           │
-│  └──────────┘ ◀───────────── └──────────┘           │
-│  Checkpointer: SQLite (data/langgraph_checkpoints)  │
-└──────────────┬──────────────────────────────────────┘
-               │
-   ┌───────────┼──────────────────────────┐
-   ▼           ▼           ▼              ▼
-Tavily      OpenWeather  SymPy        Qdrant (local, on-disk)
-web search  weather     calculator    vector store
-                                          ▲
-                              RAG pipeline: extract → split →
-                              embed (gemini-embedding-001) →
-                              cosine similarity search
-
-   SQLite (data/chatbot_memory.db)
-   └─ conversations, chat_messages, long_term_memory
-```
+<p align="center">
+  <img src="assets/404a5d1c-a21e-4025-992c-47ae9d92bd94.png" alt="AI Chatbot Application Architecture" width="1100">
+</p>
 
 **Agent loop:** the LLM calls tools when needed (`tools_condition`), tool results feed back into the chat node, and every step is checkpointed so the conversation graph can be resumed at any time.
 
