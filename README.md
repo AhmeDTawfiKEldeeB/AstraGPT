@@ -221,5 +221,6 @@ The system prompt (`agent.py`) teaches the model when to act:
 - **🧮 Math questions** → SymPy calculator
 - **⛅ Weather questions** → OpenWeatherMap tool
 
+
 ---
 
