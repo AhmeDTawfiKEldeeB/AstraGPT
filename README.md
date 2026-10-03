@@ -59,7 +59,6 @@ AstraGPT is a full-stack ChatGPT-style assistant that doesn't just chat — it *
 
 
 ---
-
 ## Architecture 🏗️
 
 <p align="center">
